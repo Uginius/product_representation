@@ -2,7 +2,7 @@ from htmls.page_getter import OzPageGetter
 
 
 def get_pages():
-    oz = OzPageGetter('qqq')
+    oz = OzPageGetter()
     oz.run()
 
 
