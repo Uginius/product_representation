@@ -3,9 +3,11 @@ from htmls.page_getter import OzPageGetter, WbPageGetter
 
 def get_pages():
     wb = WbPageGetter()
-    wb.run()
-    # oz = OzPageGetter()
-    # oz.run()
+    oz = OzPageGetter()
+    wb.start()
+    oz.start()
+    wb.join()
+    oz.join()
 
 
 if __name__ == '__main__':
