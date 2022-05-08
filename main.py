@@ -1,9 +1,11 @@
-from htmls.page_getter import OzPageGetter
+from htmls.page_getter import OzPageGetter, WbPageGetter
 
 
 def get_pages():
-    oz = OzPageGetter()
-    oz.run()
+    wb = WbPageGetter()
+    wb.run()
+    # oz = OzPageGetter()
+    # oz.run()
 
 
 if __name__ == '__main__':

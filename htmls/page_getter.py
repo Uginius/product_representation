@@ -1,5 +1,7 @@
 import datetime
 import os
+import time
+
 import requests
 from config import headers
 from src.oz_terms import oz_terms
@@ -32,10 +34,16 @@ class PageGetter:
             break
 
     def get_search_page(self):
-        url = self.search_url + self.term
+        # url = self.search_url + self.term
+        url = 'https://www.wildberries.ru/catalog/0/search.aspx?sort=popular&search=%D1%83%D0%B4%D0%BB%D0%B8%D0%BD%D0%B8%D1%82%D0%B5%D0%BB%D1%8C'
+        print(url)
         r = requests.get(url, headers=headers)
+        print(r.status_code)
+        time.sleep(2)
+        # print(r.text)
+        src = r.text
         filename = f'{self.html_dir}{self.search_id}.html'
-        write_html(r.text, filename)
+        write_html(src, filename)
 
     def check_html_dir(self):
         if not os.path.exists(self.html_dir):
@@ -56,5 +64,5 @@ class WbPageGetter(PageGetter):
         super().__init__()
         self.platform = 'wb'
         self.terms_dict = wb_terms
-        self.search_url = ''
+        self.search_url = 'https://www.wildberries.ru/catalog/0/search.aspx?sort=popular&search='
         self.html_dir = f'htmls/{self.date}/wb_html_files/'
