@@ -1,6 +1,9 @@
 from pprint import pprint
+oz = ['src/oz', 'oz']
+wb = ['src/wb', 'wb']
 
-with open('src/oz', 'r', encoding='utf8') as file:
+mp = wb
+with open(mp[0], 'r', encoding='utf8') as file:
     rqs = {}
     cat_id_str = None
     categories = {}
@@ -10,11 +13,11 @@ with open('src/oz', 'r', encoding='utf8') as file:
         txt = line.strip()
         if line[0].strip():
             cat_id += 1
-            cat_id_str = f'OZ{cat_id:03}'
+            cat_id_str = f'{mp[1].upper()}{cat_id:03}'
             rqs[cat_id_str] = {}
             categories[cat_id_str] = txt
         else:
             req_id += 1
-            rqs[cat_id_str][f'oz_{req_id:04}'] = txt
+            rqs[cat_id_str][f'{mp[1]}_{req_id:04}'] = txt
     pprint(categories)
     pprint(rqs)
