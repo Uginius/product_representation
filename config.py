@@ -17,10 +17,13 @@ headers = {
 
 chromedriver_mac_path = 'selenium_drivers/chromedriver_mac'
 chromedriver_linux_path = 'selenium_drivers/'
+chromedriver_win_path = 'selenium_drivers/selenium_drivers/chromedriver.exe'
 match sys.platform:
     case 'linux':
         browser_path = chromedriver_linux_path
     case 'darwin':
         browser_path = chromedriver_mac_path
+    case 'win32':
+        browser_path = chromedriver_win_path
     case _:
         print("ERROR: can't found selenium driver")
