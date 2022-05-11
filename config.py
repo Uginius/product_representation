@@ -27,3 +27,5 @@ match sys.platform:
         browser_path = chromedriver_win_path
     case _:
         print("ERROR: can't found selenium driver")
+
+wait_time = 7

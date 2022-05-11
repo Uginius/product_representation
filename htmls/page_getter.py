@@ -3,7 +3,7 @@ import os
 import time
 from threading import Thread
 
-from config import selenium_arguments, browser_path
+from config import selenium_arguments, browser_path, wait_time
 from src.oz_terms import oz_terms
 from src.wb_terms import wb_terms
 from utilites import write_html
@@ -41,7 +41,7 @@ class PageGetter(Thread):
     def get_search_page(self):
         url = self.search_url + self.term
         self.browser.get(url=url)
-        time.sleep(3)
+        time.sleep(wait_time)
         html_data = self.browser.page_source
         filename = f'{self.html_dir}{self.search_id}.html'
         write_html(html_data, filename)
