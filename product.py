@@ -7,7 +7,7 @@ class Product:
         self.id = None
 
     def print_items(self):
-        print([self.order, self.seller, self.name, self.url])
+        print([self.order, self.seller, self.id, self.name, self.url])
 
     def data_to_write(self):
-        return {self.order: [self.seller, self.id, self.name, self.url]}
+        return {self.order: {'seller': self.seller, 'product': self.id, 'name': self.name, 'url:': self.url}}
