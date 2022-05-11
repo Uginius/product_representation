@@ -16,10 +16,10 @@ def parse_pages():
     actual_dir = 'htmls/' + get_last_dir()
     oz_parser = OzParser(f'{actual_dir}/oz_html_files')
     oz_parser.run()
-    wb_parser = WbParser(f'{actual_dir}/wb_html_files')
-    wb_parser.run()
+    # wb_parser = WbParser(f'{actual_dir}/wb_html_files')
+    # wb_parser.run()
 
 
 if __name__ == '__main__':
-    get_pages()
-    # parse_pages()
+    # get_pages()
+    parse_pages()

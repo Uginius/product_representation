@@ -21,6 +21,11 @@ def write_html(src, filename):
         write_file.write(src)
 
 
+def add_data_to_file(src, filename):
+    with open(filename, 'a', encoding='utf8') as write_file:
+        write_file.write(src)
+
+
 def get_last_dir():
     pages_dir_from_os = os.listdir('htmls')
     dir_date_template = r'\d{2}-\d{2}-202\d'
