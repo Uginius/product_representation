@@ -17,7 +17,7 @@ headers = {
 
 chromedriver_mac_path = 'selenium_drivers/chromedriver_mac'
 chromedriver_linux_path = 'selenium_drivers/'
-chromedriver_win_path = 'selenium_drivers/selenium_drivers/chromedriver.exe'
+chromedriver_win_path = 'selenium_drivers/chromedriver.exe'
 match sys.platform:
     case 'linux':
         browser_path = chromedriver_linux_path
