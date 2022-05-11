@@ -4,7 +4,7 @@ import os
 from bs4 import BeautifulSoup
 from product import Product
 from src.oz_terms import oz_terms
-from src.wb_terms import wb_terms
+from src.wb_terms import terms
 
 
 class Parse:
@@ -112,4 +112,4 @@ class WbParser(Parse):
     def __init__(self, directory):
         super().__init__(directory)
         self.shop = 'wb'
-        self.terms = wb_terms
+        self.terms = terms

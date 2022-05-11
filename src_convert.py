@@ -2,7 +2,7 @@ from pprint import pprint
 oz = ['src/oz', 'oz']
 wb = ['src/wb', 'wb']
 
-mp = wb
+mp = oz
 with open(mp[0], 'r', encoding='utf8') as file:
     rqs = {}
     cat_id_str = None
