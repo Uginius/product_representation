@@ -40,6 +40,7 @@ class PageGetter(Thread):
 
     def get_search_page(self):
         url = self.search_url + self.term
+        print(f'connecting to {self.platform}, request id: {self.search_id}, searching: {self.term}')
         self.browser.get(url=url)
         time.sleep(wait_time)
         html_data = self.browser.page_source
