@@ -4,7 +4,8 @@ import os
 from bs4 import BeautifulSoup
 from product import Product
 from src.oz_terms import oz_terms
-from src.wb_terms import terms
+from src.wb_terms import wb_terms
+from utilites import clear_file, write_html
 
 
 class Parse:
@@ -24,16 +25,20 @@ class Parse:
 
     def run(self):
         self.set_search_terms()
+        json_filename = f'result/result_{self.shop}_{datetime.datetime.now().strftime("%d-%m-%Y")}.json'
+        clear_file(json_filename)
         for file in self.files:
+            if file == '.DS_Store':
+                continue
             self.result_data = {}
-            self.request_id = file.split('.')[0]
+            self.request_id = file.split('.')[0].split('2022_')[1]
             self.get_soup(file)
             self.parse()
-            self.write_json()
+            self.write_json(json_filename)
 
     def get_soup(self, file):
         filename = f'{self.html_path}/{file}'
-        print(f'opening {filename}, запрос: "{self.search_terms[self.request_id]}"')
+        print(f'\nopening {filename}, запрос: "{self.search_terms[self.request_id]}"')
         with open(filename, 'r', encoding='utf8') as read_file:
             src = read_file.read()
             self.soup = BeautifulSoup(src, 'lxml')
@@ -49,7 +54,6 @@ class Parse:
             self.get_elements()
             if self.empty_block:
                 break
-            # self.product.print_items()
             data.update(self.product.data_to_write())
         self.result_data[self.request_id] = data
 
@@ -63,9 +67,8 @@ class Parse:
         for el in self.terms:
             self.search_terms.update(self.terms[el])
 
-    def write_json(self):
-        filename = f'result/result_{self.shop}_{datetime.datetime.now().strftime("%d-%m-%Y")}.json'
-        with open(filename, 'a', encoding='utf8') as write_file:
+    def write_json(self, json_filename):
+        with open(json_filename, 'a', encoding='utf8') as write_file:
             data = json.dumps(self.result_data, ensure_ascii=False)
             write_file.write(data)
             write_file.write('\n')
@@ -78,7 +81,9 @@ class OzParser(Parse):
         self.terms = oz_terms
 
     def get_product_list(self):
-        self.prod_list = self.soup.find(attrs={'data-widget': 'searchResultsV2'}).div.find_all('div', recursive=False)
+        product_class = self.soup.find('div', class_='widget-search-result-container').div.div['class']
+        self.prod_list = self.soup.find_all('div', class_=product_class)
+        print('Количество товаров по запросу:', len(self.prod_list))
 
     def get_elements(self):
         divs = self.html_product.find_all('div', recursive=False)
@@ -97,7 +102,6 @@ class OzParser(Parse):
         self.product.name = link.text.strip()
         self.product.url = 'https://www.ozon.ru' + link['href'].split('/?')[0]
         self.product.id = self.product.url.split('-')[-1]
-        # self.product.print_items()
 
     def get_seller(self, seller):
         if 'продавец' in seller:
@@ -112,4 +116,16 @@ class WbParser(Parse):
     def __init__(self, directory):
         super().__init__(directory)
         self.shop = 'wb'
-        self.terms = terms
+        self.terms = wb_terms
+
+    def get_product_list(self):
+        self.prod_list = self.soup.find('div', class_='product-card-list').find_all('div', class_='product-card')
+        print('Количество товаров по запросу:', len(self.prod_list))
+
+    def get_elements(self):
+        prod = self.html_product
+        self.product.id = prod['data-popup-nm-id']
+        self.product.url = prod.find('a')['href'].split('?')[0]
+        self.product.name = prod.find('span', class_='goods-name').text
+        self.product.seller = prod.find('strong', class_='brand-name').text.split(' / ')[0]
+        # self.product.print_items()

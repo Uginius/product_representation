@@ -1,9 +1,10 @@
 import datetime
 import os
+import random
 import time
 from threading import Thread
 
-from config import selenium_arguments, browser_path, wait_time
+from config import selenium_arguments, browser_path
 from src.oz_terms import oz_terms
 from src.wb_terms import wb_terms
 from utilites import write_html
@@ -42,9 +43,10 @@ class PageGetter(Thread):
         url = self.search_url + self.term
         print(f'connecting to {self.platform}, request id: {self.search_id}, searching: {self.term}')
         self.browser.get(url=url)
+        wait_time = random.randint(7, 20)
         time.sleep(wait_time)
         html_data = self.browser.page_source
-        filename = f'{self.html_dir}{self.search_id}.html'
+        filename = f'{self.html_dir}{self.date}_{self.search_id}.html'
         write_html(html_data, filename)
 
     def initiate_browser(self):
