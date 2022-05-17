@@ -46,3 +46,12 @@ def get_last_dir():
     final_dir = sorted(loaded_dirs)[-1].strftime('%d-%m-%Y')
     print('last date is', final_dir)
     return final_dir
+
+
+def get_last_filename(platform):
+    result_files = os.listdir('result')
+    platform_lst = []
+    for file in result_files:
+        if platform in file:
+            platform_lst.append(file)
+    return sorted(platform_lst)[-1]
