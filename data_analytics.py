@@ -16,7 +16,7 @@ class DataAnalytics:
 
     def run(self):
         self.initiate_workbook()
-        # self.platform_actions(self.workbook.sheetnames[0])
+        self.platform_actions(self.workbook.sheetnames[0])
         self.platform_actions(self.workbook.sheetnames[1])
         self.workbook.save(f'xls_result/result_{self.date["Wildberries"]}.xlsx')
 
@@ -24,23 +24,23 @@ class DataAnalytics:
         self.read_requests(platform)
         self.get_json(platform)
         self.add_titles(platform)
-        self.add_body()
+        self.add_body(platform)
 
     def get_json(self, platform):
         filename = 'result/' + self.json_filename[platform]
         self.date[platform] = re.findall(r'\d{2}-\d{2}-202\d', self.json_filename[platform])[0]
-        sellers = ['РОСЭЛ', 'Фотон', 'Safeline', 'Контакт', 'КОНТАКТ Дом', 'Рекорд']
+        sellers = ['РОСЭЛ', 'Фотон', 'Safeline', 'Контакт', 'КОНТАКТ Дом', 'Рекорд', 'ORGANIDE']
         with open(filename, 'r', encoding='utf8') as file:
             self.rosel_goods = {}
             for line in file:
                 json_req = json.loads(line)
                 req_id = list(json_req)[0]
                 req = list(json_req.values())[0]
-                products = [{order: prod['product']} for order, prod in req.items() if prod['seller'] in sellers]
-                sls = [prod['seller'] for order, prod in req.items()]
-                print(self.platform_requests[req_id], sls)
+                products = [{int(order): int(prod['product'])} for order, prod in req.items() if prod['seller'] in sellers]
                 self.rosel_goods[req_id] = products
-        # pprint(self.rosel_goods)
+                # все бренды на 1-й странице
+                # sls = [prod['seller'] for order, prod in req.items()]
+                # print(self.platform_requests[req_id], sorted(set(sls)))
 
     def read_requests(self, platform):
         terms = oz_terms if platform == 'Ozon' else wb_terms
@@ -49,15 +49,15 @@ class DataAnalytics:
             self.platform_requests.update(rq)
 
     def add_titles(self, platform):
-        titles = ['Целевой запрос', self.date[platform], 'Цель', 'Наименование']
+        titles = ['Целевой запрос', self.date[platform], 'Наименование']
         self.workbook[platform].append(titles)
 
-    def add_body(self):
+    def add_body(self, platform):
         for req_id in self.rosel_goods:
             rq = self.platform_requests[req_id]
             rq_goods = self.rosel_goods[req_id]
-            target = ''
-            result = [rq, len(rq_goods), target, rq_goods]
+            result = [rq, len(rq_goods), str(rq_goods)]
+            self.workbook[platform].append(result)
             print(result)
 
     def initiate_workbook(self):
