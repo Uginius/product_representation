@@ -43,7 +43,8 @@ class PageGetter(Thread):
         url = self.search_url + self.term
         print(f'connecting to {self.platform}, request id: {self.search_id}, searching: {self.term}')
         self.browser.get(url=url)
-        wait_time = random.randint(7, 20)
+        self.scroll_down()
+        wait_time = random.randint(3, 7)
         time.sleep(wait_time)
         html_data = self.browser.page_source
         filename = f'{self.html_dir}{self.date}_{self.search_id}.html'
@@ -59,6 +60,9 @@ class PageGetter(Thread):
         if not os.path.exists(self.html_dir):
             os.makedirs(self.html_dir)
 
+    def scroll_down(self):
+        pass
+
 
 class OzPageGetter(PageGetter):
     def __init__(self):
@@ -67,6 +71,18 @@ class OzPageGetter(PageGetter):
         self.terms_dict = oz_terms
         self.search_url = 'https://www.ozon.ru/search/?text='
         self.html_dir = f'htmls/{self.date}/oz_html_files/'
+
+    def scroll_down(self):
+        last_height = self.browser.execute_script("return document.body.scrollHeight")
+        self.browser.execute_script(f"window.scrollTo(0, {last_height});")
+        time.sleep(1)
+        while True:
+            self.browser.execute_script(f"window.scrollTo(0, document.body.scrollHeight);")
+            new_height = self.browser.execute_script("return document.body.scrollHeight")
+            time.sleep(1)
+            if new_height == last_height:
+                break
+            last_height = new_height
 
 
 class WbPageGetter(PageGetter):

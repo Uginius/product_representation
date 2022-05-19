@@ -6,8 +6,7 @@ from wb_oz_parser import OzParser, WbParser
 @time_track
 def get_pages():
     global wb_search, oz_search
-    wb = WbPageGetter()
-    oz = OzPageGetter()
+    wb, oz = WbPageGetter(), OzPageGetter()
     if wb_search:
         wb.start()
     if oz_search:
@@ -30,7 +29,7 @@ def parse_pages():
 
 
 if __name__ == '__main__':
-    wb_search = False
+    wb_search = True
     oz_search = True
     # get_pages()
     parse_pages()
