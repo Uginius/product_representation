@@ -201,5 +201,6 @@ class DataAnalytics:
         rd.height = 15
 
 
-res = DataAnalytics()
-res.run()
+if __name__ == '__main__':
+    res = DataAnalytics()
+    res.run()
