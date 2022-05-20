@@ -2,6 +2,7 @@ import datetime
 import os
 import re
 import time
+from datetime import datetime
 
 
 def time_track(func):
@@ -55,3 +56,11 @@ def get_last_filename(platform):
         if platform in file:
             platform_lst.append(file)
     return sorted(platform_lst)[-1]
+
+
+def last_tables():
+    xls_dir, temp = 'xls_result', r'\d{2}-\d{2}-202\d'
+    ts = {datetime.strptime(re.findall(temp, f)[0], '%d-%m-%Y'): f for f in os.listdir(xls_dir)}
+    dates = ts.keys()
+    last = sorted(dates)[-1]
+    return {d: f'{xls_dir}/{ts[d]}' for d in dates if d.year == last.year and d.month == last.month}
