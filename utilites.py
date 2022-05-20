@@ -59,8 +59,13 @@ def get_last_filename(platform):
 
 
 def last_tables():
-    xls_dir, temp = 'xls_result', r'\d{2}-\d{2}-202\d'
-    ts = {datetime.strptime(re.findall(temp, f)[0], '%d-%m-%Y'): f for f in os.listdir(xls_dir)}
+    # xls_dir, temp = 'xls_result', r'\d{2}-\d{2}-202\d'
+    # ts = {datetime.strptime(re.findall(temp, f)[0], '%d-%m-%Y'): f for f in os.listdir(xls_dir)}
+    ts = {}
+    for filename in os.listdir("xls_result"):
+        find_date = re.findall(r'\d{2}-\d{2}-202\d', filename)
+        if find_date:
+            ts[datetime.strptime(find_date[0], '%d-%m-%Y')] = filename
     dates = ts.keys()
     last = sorted(dates)[-1]
-    return {d: f'{xls_dir}/{ts[d]}' for d in dates if d.year == last.year and d.month == last.month}
+    return {d: f'{"xls_result"}/{ts[d]}' for d in dates if d.year == last.year and d.month == last.month}
