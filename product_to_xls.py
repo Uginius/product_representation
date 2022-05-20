@@ -8,4 +8,4 @@ class ProductToXls:
         return {self.id: [self.order, self.name]}
 
     def order_name(self):
-        return f'id:{self.id}, №{self.order}: {self.name}'
+        return f'{self.id}, №{self.order}: {self.name}'

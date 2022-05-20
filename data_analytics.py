@@ -2,6 +2,8 @@ import json
 import re
 from openpyxl import Workbook
 from openpyxl.styles import Font, Side, Border, PatternFill, Alignment
+
+from product_to_xls import ProductToXls
 from src.oz_goals import oz_goals
 from src.wb_goals import wb_goals
 from src.wb_terms import wb_terms, wb_categories
@@ -9,23 +11,11 @@ from src.oz_terms import oz_terms, oz_categories
 from utilites import get_last_filename
 
 
-class ProductToXls:
-    def __init__(self, prod_id, order, name):
-        self.id = int(prod_id)
-        self.order = int(order)
-        self.name = name
-
-    def data_out(self):
-        return {self.id: [self.order, self.name]}
-
-    def order_name(self):
-        return f'id:{self.id}, №{self.order}: {self.name}'
-
-
 class DataAnalytics:
     def __init__(self):
         self.json_filename = {'Ozon': get_last_filename('oz'), 'Wildberries': get_last_filename('wb')}
         self.goals = {'Ozon': oz_goals, 'Wildberries': wb_goals}
+        self.current_goal = None
         self.platform_requests = {}
         self.first_rq_in_category = {}
         self.categories = {}
@@ -40,7 +30,6 @@ class DataAnalytics:
         self.initiate_workbook()
         self.platform_actions(self.workbook.sheetnames[0])
         self.platform_actions(self.workbook.sheetnames[1])
-        self.table_footer()
         self.workbook.save(f'xls_result/result_{self.date["Wildberries"]}.xlsx')
 
     def platform_actions(self, platform):
@@ -54,6 +43,7 @@ class DataAnalytics:
     def get_json(self):
         filename = 'result/' + self.json_filename[self.shop]
         self.date[self.shop] = re.findall(r'\d{2}-\d{2}-202\d', self.json_filename[self.shop])[0]
+        print(f'opening {filename}, by {self.date[self.shop]}')
         with open(filename, 'r', encoding='utf8') as file:
             self.rosel_goods = {}
             self.set_rosel_goods(file)
@@ -67,12 +57,25 @@ class DataAnalytics:
             for order, prod in req.items():
                 prod_id = prod['product']
                 if prod['seller'] in sellers:
+                    if self.check_incorrect_goods(req_id, prod_id):
+                        continue
                     products.append(ProductToXls(prod_id, order, prod['name']))
             # products = [ProductToXls(p['product'], n, p['name']) for n, p in req.items() if p['seller'] in sellers]
             self.rosel_goods[req_id] = products
             # все бренды на 1-й странице
             # sls = [p['seller'] for n, p in req.items()]
             # print(self.platform_requests[req_id], sorted(set(sls)))
+
+    def check_incorrect_goods(self, req_id, prod_id):
+        ban_products_array = {'индикаторная отвертка': ['38710001', '79676933'],
+                              'отвертка индикаторная': ['38710001', '79676933']
+                              }
+        incorrect_product_id_detected = False
+        if self.platform_requests[req_id] in ban_products_array.keys():
+            ban_list = ban_products_array[self.platform_requests.get(req_id, None)]
+            if prod_id in ban_list:
+                incorrect_product_id_detected = True
+        return incorrect_product_id_detected
 
     def read_requests(self):
         terms, categories = [oz_terms, oz_categories] if self.shop == 'Ozon' else [wb_terms, wb_categories]
@@ -109,13 +112,15 @@ class DataAnalytics:
         col_date.alignment = Alignment(horizontal='center')
 
     def add_body(self):
-        goals = self.goals[self.shop]
+        goals_array = self.goals[self.shop]
         self.req_id = None
         for self.req_id in self.rosel_goods:
             self.check_category()
-            self.set_body_lines(goal=goals[self.req_id])
+            self.current_goal = goals_array[self.req_id]
+            self.set_body_lines()
 
-    def set_body_lines(self, goal):
+    def set_body_lines(self):
+        goal = self.current_goal
         goods = self.rosel_goods[self.req_id]
         rq = self.platform_requests[self.req_id]
         quantity_goods = len(goods)
@@ -129,7 +134,7 @@ class DataAnalytics:
         else:
             self.sheet.append([rq, goal, quantity_goods, None])
         self.merge_and_style_abc_columns(current_row_number, row_fin_number)
-        self.check_goals(goal=goal, cell=f'C{current_row_number}', goods=goods)
+        self.check_goals(cell=f'C{current_row_number}', goods=goods)
         self.row_top_borders(current_row_number)
 
     def row_top_borders(self, row_number):
@@ -147,16 +152,16 @@ class DataAnalytics:
             self.sheet.merge_cells(f'B{first_row}:B{last_row}')
             self.sheet.merge_cells(f'C{first_row}:C{last_row}')
 
-    def check_goals(self, goal, cell, goods):
+    def check_goals(self, cell, goods):
         cell = self.sheet[cell]
-        cond = self.is_conditions_true(goal=goal, cell=cell, goods=goods)
+        cond = self.is_conditions_true(cell=cell, goods=goods)
         color_yes = 'C4D79B'
         color_no = 'E6B8B7'
         color = color_yes if cond else color_no
         cell.fill = PatternFill("solid", fgColor=color)
 
-    def is_conditions_true(self, goal, cell, goods):
-        match goal:
+    def is_conditions_true(self, cell, goods):
+        match self.current_goal:
             case 'на 1 странице, по популярности':
                 return True if cell.value > 0 else False
             case 'не менее 5 SKU на 1 странице, по популярности':
@@ -183,9 +188,6 @@ class DataAnalytics:
             self.workbook.create_sheet(shop)
         if 'Sheet' in self.workbook.sheetnames:
             self.workbook.remove(self.workbook['Sheet'])
-
-    def table_footer(self):
-        pass
         # ws['A1'].hyperlink = "http://www.google.com"
 
     def set_style_to_categoy_cell(self, row_order):
