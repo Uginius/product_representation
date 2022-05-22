@@ -16,6 +16,7 @@ class CombineTables:
         self.cur_sw = None
         self.sheet = None
         self.categories = {'Ozon': oz_categories.values(), 'Wildberries': wb_categories.values()}
+        self.content = {'Ozon': [], 'Wildberries': []}
 
     def run(self):
         self.load_tables()
@@ -41,8 +42,7 @@ class CombineTables:
             for table in self.tables:
                 self.cur_sw = table[platform]
                 self.get_table_elements(platform)
-                break
-            break
+            self.new_table_data(platform)
 
     def set_caption(self, shop):
         table = self.tables[-1][shop]
@@ -82,12 +82,16 @@ class CombineTables:
             if cel_d:
                 goods.append(cel_d)
         content[cat] = rq_and_goods
-        # pprint(content)
-        for cat in content:
-            category = content[cat]
-            print(cat, len(category))
-            for req in category:
-                print(len(category[req]))
+        self.content[platform].append(content)
+        print()
+
+    def new_table_data(self, platform):
+        categories = {}
+        for category in self.categories[platform]:
+            for lst in self.content[platform]:
+                cat_cont = lst[category]
+            categories = {lst[category] for lst in self.content[platform]}
+            break
 
 
 if __name__ == '__main__':

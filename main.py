@@ -1,5 +1,4 @@
-from combine_tables_into_one import CombineTables
-from data_analytics import DataAnalytics
+from data_analytics_monthly import MonthlyDataAnalytics
 from htmls.page_getter import OzPageGetter, WbPageGetter
 from utilites import get_last_dir, time_track
 from wb_oz_parser import OzParser, WbParser
@@ -32,14 +31,8 @@ def parse_pages():
 
 @time_track
 def convert_json_ro_tables():
-    res = DataAnalytics()
+    res = MonthlyDataAnalytics()
     res.run()
-
-
-@time_track
-def combine_tables():
-    combiner = CombineTables()
-    combiner.run()
 
 
 if __name__ == '__main__':
@@ -47,5 +40,4 @@ if __name__ == '__main__':
     oz_search = True
     # get_pages()
     # parse_pages()
-    # convert_json_ro_tables()
-    combine_tables()
+    convert_json_ro_tables()

@@ -3,6 +3,7 @@ import os
 import re
 import time
 from datetime import datetime
+from pprint import pprint
 
 
 def time_track(func):
@@ -69,3 +70,22 @@ def last_tables():
     dates = ts.keys()
     last = sorted(dates)[-1]
     return {d: f'{"xls_result"}/{ts[d]}' for d in dates if d.year == last.year and d.month == last.month}
+
+
+def last_month_json_files(platform):
+    jsf = {}
+    for filename in os.listdir("result"):
+        find_date = re.findall(r'\d{2}-\d{2}-202\d', filename)
+        is_platform = platform in filename
+        if find_date and is_platform:
+            jsf[datetime.strptime(find_date[0], '%d-%m-%Y')] = filename
+    dates = jsf.keys()
+    last = sorted(dates)[-1]
+    res = {d: f'{"result"}/{jsf[d]}' for d in dates if d.year == last.year and d.month == last.month}
+    return res
+
+
+if __name__ == '__main__':
+    platform = 'oz'
+    files = last_month_json_files(platform)
+    pprint(files)
