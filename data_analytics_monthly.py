@@ -215,8 +215,12 @@ class MonthlyDataAnalytics:
                 last_row = first_row + rows - 1 if rows else first_row
                 # last_row = first_row + rows - 1
                 sw.merge_cells(f'{cell}:{column}{last_row}')
+                column2 = chr(first_cell + n + len(lens))
+                cell2 = f'{column2}{first_row}'
+                sw.merge_cells(f'{cell2}:{column2}{last_row}')
             sw[cell].alignment = Alignment(horizontal='center', vertical='center')
             self.check_goals(cell, self.platform_goods[n][self.req_id])
+            self.row_top_borders(first_row)
 
     def check_goals(self, cell, goods):
         cell = self.sheet[cell]

@@ -39,5 +39,5 @@ if __name__ == '__main__':
     wb_search = True
     oz_search = True
     # get_pages()
-    # parse_pages()
+    parse_pages()
     convert_json_ro_tables()

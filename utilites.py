@@ -41,7 +41,7 @@ def get_last_dir():
         check_dir = re.findall(dir_date_template, el)
         try:
             if check_dir:
-                dir_in_list = datetime.datetime.strptime(el, '%d-%m-%Y')
+                dir_in_list = datetime.strptime(el, '%d-%m-%Y')
                 loaded_dirs.append(dir_in_list)
         except ValueError as ex:
             print(ex)
