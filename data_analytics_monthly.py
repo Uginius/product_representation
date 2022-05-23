@@ -143,11 +143,12 @@ class MonthlyDataAnalytics:
         rq = self.platform_requests[self.req_id]
         if max_goods_q:
             self.body_lines_to_table(products_q=products_q, prods=prods, max_goods_q=max_goods_q)
-            self.merge_body_cells(fst_row=first_row_number, lens=products_q)
         else:
             empty = [None] * len(products_q)
             result = [rq, self.current_goal, *products_q, *empty]
             self.sheet.append(result)
+        self.merge_body_cells(fst_row=first_row_number, lens=products_q)
+        # self.row_top_borders(current_row_number)
 
     def body_lines_to_table(self, products_q, prods, max_goods_q):
         dates_quantity = len(products_q)
@@ -157,19 +158,25 @@ class MonthlyDataAnalytics:
                 for num in range(len_rq_prod_list, max_goods_q):
                     el.append(None)
         prod_lines = [[prods[date][n] for date in range(dates_quantity)] for n in range(max_goods_q)]
-        rq = self.platform_requests[self.req_id]
         for n, prl in enumerate(prod_lines):
+            second = []
+            for pq in products_q:
+                if pq == 0:
+                    second.append(0 if n > pq - 1 else pq)
+                else:
+                    second.append(None if n > pq - 1 else pq)
             prn = []
             for p in prl:
                 prn.append(p.order_name()) if p else prn.append(None)
-            result = [rq, self.current_goal, *products_q, *prn]
+            result = [self.platform_requests[self.req_id], self.current_goal, *second, *prn]
             self.sheet.append(result)
 
     def merge_body_cells(self, fst_row, lens):
         max_q = max(lens)
-        last_row = fst_row + max_q - 1
+        last_row = fst_row + max_q - 1 if max_q else fst_row
+        # last_row = fst_row + max_q - 1
         self.merge_ab(fst_row, last_row)
-        # self.merge_and_style_abc_columns(first_row=fst_row, row_fin_number)
+        self.merge_goods_cells(first_row=fst_row, lens=lens)
 
     def merge_ab(self, first_row, last_row):
         sw = self.sheet
@@ -194,20 +201,22 @@ class MonthlyDataAnalytics:
     # self.row_top_borders(current_row_number)
     #
 
-    def merge_and_style_abc_columns(self, first_row, last_row):
-        self.sheet[f'A{first_row}'].alignment = Alignment(horizontal='left', vertical='center')
-        self.sheet[f'B{first_row}'].alignment = Alignment(horizontal='left', vertical='center')
-        self.sheet[f'C{first_row}'].alignment = Alignment(horizontal='center', vertical='center')
-        if last_row:
-            self.sheet.merge_cells(f'A{first_row}:A{last_row}')
-            self.sheet.merge_cells(f'B{first_row}:B{last_row}')
-            self.sheet.merge_cells(f'C{first_row}:C{last_row}')
-
-    def row_top_borders(self, row_number):
-        thin = Side(border_style="thin", color="000000")
-        row = self.sheet[row_number]
-        for cell in row:
-            cell.border = Border(top=thin)
+    def merge_goods_cells(self, first_row, lens):
+        sw = self.sheet
+        first_cell = ord('C')
+        rows = max(lens)
+        for n, l in enumerate(lens):  # 4 0 5
+            column = chr(first_cell + n)
+            cell = f'{column}{first_row}'
+            if l:
+                last_row = first_row + l - 1
+                sw.merge_cells(f'{cell}:{column}{last_row}')
+            else:
+                last_row = first_row + rows - 1 if rows else first_row
+                # last_row = first_row + rows - 1
+                sw.merge_cells(f'{cell}:{column}{last_row}')
+            sw[cell].alignment = Alignment(horizontal='center', vertical='center')
+            self.check_goals(cell, self.platform_goods[n][self.req_id])
 
     def check_goals(self, cell, goods):
         cell = self.sheet[cell]
@@ -216,6 +225,12 @@ class MonthlyDataAnalytics:
         color_no = 'E6B8B7'
         color = color_yes if cond else color_no
         cell.fill = PatternFill("solid", fgColor=color)
+
+    def row_top_borders(self, row_number):
+        thin = Side(border_style="thin", color="000000")
+        row = self.sheet[row_number]
+        for cell in row:
+            cell.border = Border(top=thin)
 
     def is_conditions_true(self, cell, goods):
         match self.current_goal:
@@ -228,7 +243,12 @@ class MonthlyDataAnalytics:
             case 'не менее 2 SKU на 1 странице, по популярности':
                 return True if cell.value >= 2 else False
             case 'не ниже 5 строки, по популярности':
-                top5 = [prod.order for prod in goods if prod.order < 6]
+                top5 = []
+                for prod in goods:
+                    if prod:
+                        if prod.order < 6:
+                            top5.append(prod.order)
+                # top5 = [prod.order for prod in goods if prod.order < 6]
                 return True if top5 else False
 
     def check_category(self):
