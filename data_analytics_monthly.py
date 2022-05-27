@@ -186,21 +186,6 @@ class MonthlyDataAnalytics:
             self.sheet.merge_cells(f'A{first_row}:A{last_row}')
             self.sheet.merge_cells(f'B{first_row}:B{last_row}')
 
-    # quantity_goods = 0
-    # current_row_number = self.sheet.max_row + 1
-    # row_fin_number = None
-    # if quantity_goods:
-    #     row_fin_number = current_row_number + quantity_goods - 1
-    #     self.sheet.append([rq, goal, quantity_goods, goods[0].order_name()])
-    #     for prod in goods[1:]:
-    #         self.sheet.append([None, None, None, prod.order_name()])
-    # else:
-    #     self.sheet.append([rq, goal, quantity_goods, None])
-    # self.merge_and_style_abc_columns(current_row_number, row_fin_number)
-    # self.check_goals(cell=f'C{current_row_number}', goods=goods)
-    # self.row_top_borders(current_row_number)
-    #
-
     def merge_goods_cells(self, first_row, lens):
         sw = self.sheet
         first_cell = ord('C')
