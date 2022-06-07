@@ -1,6 +1,7 @@
 import json
 from openpyxl import Workbook
 from openpyxl.styles import Font, Side, Border, PatternFill, Alignment
+from openpyxl.styles.numbers import BUILTIN_FORMATS
 
 from product_to_xls import ProductToXls
 from src.oz_goals import oz_goals
@@ -28,6 +29,8 @@ class MonthlyDataAnalytics:
         self.shop = None
         self.sheet = None
         self.req_id = None
+        self.line_kpi = 0
+        self.total_kpi = 0
 
     def run(self):
         self.initiate_workbook()
@@ -43,18 +46,19 @@ class MonthlyDataAnalytics:
         self.add_caption()
         self.add_titles()
         self.add_body()
+        self.set_total_kpi()
 
     def get_json(self):
-        json_files = self.json_filenames[self.shop]
+        platform = self.shop
         goods = {}
-        for date, filename in json_files.items():
+        for date, filename in self.json_filenames[platform].items():
             print(f'opening {filename}')
             with open(filename, 'r', encoding='utf8') as file:
                 self.rosel_goods = {}
                 self.set_rosel_goods(file)
                 goods.update({date: self.rosel_goods})
         self.rosel_goods = {}
-        self.all_platform_goods[self.shop] = goods
+        self.all_platform_goods[platform] = goods
 
     def set_rosel_goods(self, file):
         sellers = ['РОСЭЛ', 'Фотон', 'Safeline', 'Контакт', 'КОНТАКТ Дом', 'Рекорд', 'ORGANIDE']
@@ -89,28 +93,32 @@ class MonthlyDataAnalytics:
 
     def add_caption(self):
         first_line = ['Отчет о представленности продукции по запросам на маркет-плейсах']
-        second_line = ['Регион для которого осуществляется поисковая выдача - Москва.']
-        self.sheet = self.workbook[self.shop]
-        self.sheet.append(first_line)
-        self.sheet.append([])
-        self.sheet.append(second_line)
-        self.sheet.append([])
-        self.sheet['A1'].font = Font(name='Calibri', size=20, color="000000", bold=True)
-        self.sheet.row_dimensions[1].height = 40
-        self.sheet.column_dimensions['A'].width = 35
-        self.sheet.column_dimensions['B'].width = 35
+        platform = self.shop
+        regions = {'Ozon': 'Москва', 'Wildberries': 'Санкт-Петербург'}
+        second_line = [f'Регион для которого осуществляется поисковая выдача - {regions[platform]}']
+        self.sheet = self.workbook[platform]
+        sw = self.sheet
+        sw.append(first_line)
+        sw.append([])
+        sw.append(second_line)
+        sw.append([])
+        sw['A1'].font = Font(name='Calibri', size=20, color="000000", bold=True)
+        sw.row_dimensions[1].height = 40
+        sw.column_dimensions['A'].width = 35
+        sw.column_dimensions['B'].width = 35
+        sw.column_dimensions['C'].width = 7
 
     def add_titles(self):
         dates = [date.strftime('%d.%m.%Y') for date in self.all_platform_goods[self.shop]]
         products = ['Товары ' + date for date in dates]
-        titles = ['Целевой запрос', 'Цель', *dates, *products]
+        titles = ['Целевой запрос', 'Цель', 'КПД', *dates, *products]
         self.sheet.append(titles)
         self.add_titles_style(row_num=self.sheet.max_row, dates_quantity=len(dates))
 
     def add_titles_style(self, row_num, dates_quantity):
         sw = self.sheet
         thick = Side(border_style="thick", color="000000")
-        first_date_column_number = ord('C')
+        first_date_column_number = ord('D')
         first_goods_column_number = first_date_column_number + dates_quantity
         for n in range(dates_quantity):
             date_column = chr(first_date_column_number + n)
@@ -134,19 +142,22 @@ class MonthlyDataAnalytics:
             self.set_body_lines()
 
     def set_body_lines(self):
-        first_row_number = self.sheet.max_row + 1
+        self.line_kpi = 0
+        sw = self.sheet
+        first_row_number = sw.max_row + 1
         req_id = self.req_id
         all_dates_shop_products_for_rq = [prods[req_id] for prods in self.platform_goods]
         products_q = [len(el) for el in all_dates_shop_products_for_rq]
         max_goods_q = max(products_q)
         prods = [prs for prs in all_dates_shop_products_for_rq]
-        rq = self.platform_requests[self.req_id]
+        rq = self.platform_requests[req_id]
         if max_goods_q:
             self.body_lines_to_table(products_q=products_q, prods=prods, max_goods_q=max_goods_q)
         else:
             empty = [None] * len(products_q)
-            result = [rq, self.current_goal, *products_q, *empty]
-            self.sheet.append(result)
+            kpi = None
+            result = [rq, self.current_goal, kpi, *products_q, *empty]
+            sw.append(result)
         self.merge_body_cells(fst_row=first_row_number, lens=products_q)
         # self.row_top_borders(current_row_number)
 
@@ -165,36 +176,39 @@ class MonthlyDataAnalytics:
                     second.append(0 if n > pq - 1 else pq)
                 else:
                     second.append(None if n > pq - 1 else pq)
-            prn = []
+            pr_names = []
             for p in prl:
-                prn.append(p.order_name()) if p else prn.append(None)
-            result = [self.platform_requests[self.req_id], self.current_goal, *second, *prn]
+                pr_names.append(p.order_name()) if p else pr_names.append(None)
+            kpi = None
+            result = [self.platform_requests[self.req_id], self.current_goal, kpi, *second, *pr_names]
             self.sheet.append(result)
 
     def merge_body_cells(self, fst_row, lens):
         max_q = max(lens)
         last_row = fst_row + max_q - 1 if max_q else fst_row
         # last_row = fst_row + max_q - 1
-        self.merge_ab(fst_row, last_row)
+        self.merge_abc(fst=fst_row, last=last_row, lens=lens)
         self.merge_goods_cells(first_row=fst_row, lens=lens)
 
-    def merge_ab(self, first_row, last_row):
+    def merge_abc(self, fst, last, lens):
         sw = self.sheet
-        sw[f'A{first_row}'].alignment = Alignment(horizontal='left', vertical='center')
-        sw[f'B{first_row}'].alignment = Alignment(horizontal='left', vertical='center')
-        if last_row:
-            self.sheet.merge_cells(f'A{first_row}:A{last_row}')
-            self.sheet.merge_cells(f'B{first_row}:B{last_row}')
+        sw[f'A{fst}'].alignment = Alignment(horizontal='left', vertical='center')
+        sw[f'B{fst}'].alignment = Alignment(horizontal='left', vertical='center')
+        sw[f'C{fst}'].alignment = Alignment(horizontal='center', vertical='center')
+        if last:
+            sw.merge_cells(f'A{fst}:A{last}')
+            sw.merge_cells(f'B{fst}:B{last}')
+            sw.merge_cells(f'C{fst}:C{last}')
 
     def merge_goods_cells(self, first_row, lens):
         sw = self.sheet
-        first_cell = ord('C')
+        first_cell = ord('D')
         rows = max(lens)
-        for n, l in enumerate(lens):  # 4 0 5
+        for n, goods_in_page in enumerate(lens):  # 4 0 5 0
             column = chr(first_cell + n)
             cell = f'{column}{first_row}'
-            if l:
-                last_row = first_row + l - 1
+            if goods_in_page:
+                last_row = first_row + goods_in_page - 1
                 sw.merge_cells(f'{cell}:{column}{last_row}')
             else:
                 last_row = first_row + rows - 1 if rows else first_row
@@ -206,19 +220,23 @@ class MonthlyDataAnalytics:
             sw[cell].alignment = Alignment(horizontal='center', vertical='center')
             self.check_goals(cell, self.platform_goods[n][self.req_id])
             self.row_top_borders(first_row)
+        kpi_cell = sw[f'C{first_row}']
+        kpi_cell.value = self.line_kpi
 
-    def check_goals(self, cell, goods):
-        cell = self.sheet[cell]
+    def check_goals(self, cl, goods):
+        cell = self.sheet[cl]
         cond = self.is_conditions_true(cell=cell, goods=goods)
         color_yes = 'C4D79B'
         color_no = 'E6B8B7'
         color = color_yes if cond else color_no
         cell.fill = PatternFill("solid", fgColor=color)
+        self.total_kpi += 1
+        if cond:
+            self.line_kpi += 1
 
     def row_top_borders(self, row_number):
         thin = Side(border_style="thin", color="000000")
-        row = self.sheet[row_number]
-        for cell in row:
+        for cell in self.sheet[row_number]:
             cell.border = Border(top=thin)
 
     def is_conditions_true(self, cell, goods):
@@ -265,6 +283,15 @@ class MonthlyDataAnalytics:
         category_cell.font = cat_font
         rd = self.sheet.row_dimensions[row_order]
         rd.height = 15
+
+    def set_total_kpi(self):
+        sw = self.sheet
+        row = sw.max_row
+        kpi_result = f'=SUM(C7:C{row})/{self.total_kpi}'
+        sw.append([None, None, kpi_result])
+        result_cell = sw[f'C{row + 1}']
+        result_cell.number_format = BUILTIN_FORMATS[10]
+        pass
 
 
 if __name__ == '__main__':
