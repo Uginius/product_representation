@@ -12,7 +12,7 @@ def time_track(func):
         result = func(*args, **kwargs)
         ended_at = time.time()
         elapsed = round(ended_at - started_at, 4)
-        print(f'\nФункция работала {elapsed} секунд(ы)')
+        print(f'\nФункция работала {elapsed} секунд(ы), или {elapsed//60} минут.')
         return result
 
     return surrogate
@@ -81,7 +81,7 @@ def last_month_json_files(platform):
             jsf[datetime.strptime(find_date[0], '%d-%m-%Y')] = filename
     dates = jsf.keys()
     last = sorted(dates)[-1]
-    res = {d: f'{"result"}/{jsf[d]}' for d in dates if d.year == last.year and d.month == last.month}
+    res = {d: f'result/{jsf[d]}' for d in dates if d.year == last.year and d.month == last.month}
     return res
 
 
