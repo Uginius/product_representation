@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 from product import Product
 from src.oz_terms import oz_terms
 from src.wb_terms import wb_terms
-from utilites import clear_file, write_html
+from utilites import clear_file
 
 
 class Parse:
@@ -38,13 +38,14 @@ class Parse:
 
     def get_soup(self, file):
         filename = f'{self.html_path}/{file}'
-        print(f'\nopening {filename}, запрос: "{self.search_terms[self.request_id]}"')
+        print(f'opening {file}, запрос: "{self.search_terms[self.request_id]}"', end='. ')
         with open(filename, 'r', encoding='utf8') as read_file:
             src = read_file.read()
             self.soup = BeautifulSoup(src, 'lxml')
 
     def parse(self):
         self.get_product_list()
+        print('Количество товаров по запросу:', len(self.prod_list))
         if not self.prod_list:
             return
         data = {}
@@ -52,6 +53,7 @@ class Parse:
         for order, self.html_product in enumerate(self.prod_list):
             self.product = Product(order + 1)
             self.get_elements()
+            # self.product.print_items()
             if self.empty_block:
                 break
             data.update(self.product.data_to_write())
@@ -83,7 +85,6 @@ class OzParser(Parse):
     def get_product_list(self):
         product_class = self.soup.find('div', class_='widget-search-result-container').div.div['class']
         self.prod_list = self.soup.find_all('div', class_=product_class)
-        print('Количество товаров по запросу:', len(self.prod_list))
 
     def get_elements(self):
         divs = self.html_product.find_all('div', recursive=False)
@@ -120,12 +121,17 @@ class WbParser(Parse):
 
     def get_product_list(self):
         self.prod_list = self.soup.find('div', class_='product-card-list').find_all('div', class_='product-card')
-        print('Количество товаров по запросу:', len(self.prod_list))
 
     def get_elements(self):
-        prod = self.html_product
-        self.product.id = prod['data-popup-nm-id']
-        self.product.url = prod.find('a')['href'].split('?')[0]
-        self.product.name = prod.find('span', class_='goods-name').text
-        self.product.seller = prod.find('strong', class_='brand-name').text.split(' / ')[0]
-        # self.product.print_items()
+        html_prod = self.html_product
+        cp = self.product
+        cp.id = html_prod['data-popup-nm-id']
+        cp.url = html_prod.find('a')['href'].split('?')[0]
+        try:
+            cp.name = html_prod.find('span', class_='goods-name').text
+        except AttributeError:
+            pass
+        try:
+            cp.seller = html_prod.find('strong', class_='brand-name').text.split(' / ')[0]
+        except AttributeError:
+            pass
