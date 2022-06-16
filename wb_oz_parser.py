@@ -100,9 +100,12 @@ class OzParser(Parse):
             self.get_seller(seller_div.find_all(recursive=False)[-1].text)
         else:
             self.get_seller(divs[2].find_all('div', recursive=False)[-1].find_all('span')[3].text)
-        self.product.name = link.text.strip()
-        self.product.url = 'https://www.ozon.ru' + link['href'].split('/?')[0]
-        self.product.id = self.product.url.split('-')[-1]
+        cp = self.product
+        cp.name = link.text.strip()
+        cp.url = 'https://www.ozon.ru' + link['href'].split('/?')[0]
+        cp.id = cp.url.split('-')[-1]
+        if 'http' in cp.id:
+            cp.id = cp.id.split('/')[-1]
 
     def get_seller(self, seller):
         if 'продавец' in seller:
